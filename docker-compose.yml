@@ -1,0 +1,44 @@
+nginx:
+    restart: always
+    build: ./devops/nginx
+    ports:
+        - "80:80"
+    volumes_from:
+        - web
+    links:
+        - web:web
+
+web:
+    restart: always
+    build: ./devops/php
+    links:
+        - mysql:mysql
+        - redis:redis
+    env_file: env
+    volumes:
+        - ./magento:/project
+        - /var/www/html
+
+data:
+    restart: always
+    image: alpine
+    volumes:
+        - /var/lib/mysql
+    command: "true"
+
+mysql:
+    restart: always
+    image: mysql:latest
+    env_file: env
+    volumes:
+        - ./devops/mysql/backups:/backups
+    volumes_from:
+        - data
+    expose:
+        - "3306"
+
+redis:
+    restart: always
+    image: redis:latest
+    expose:
+        - "6379"
